@@ -40,6 +40,8 @@ void drawCells(vector<vector<Cell>>& grid) {
 
             if (refToCell.activated) {
                 DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
+            } else if (refToCell.isFlagged) {
+                DrawText(TextFormat("%s", "#"), refToCell.x + 30, refToCell.y + 160, 25, RED);
             }
         }
     }
