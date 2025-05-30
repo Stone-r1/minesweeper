@@ -38,6 +38,8 @@ void drawCells(vector<vector<Cell>>& grid) {
             // 15 px margin on the right and the left
             DrawRectangle(drawX, drawY, LENGTH, LENGTH, GRAY);
             DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, BLACK);
+
+            DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
         }
     }
 }
@@ -45,8 +47,8 @@ void drawCells(vector<vector<Cell>>& grid) {
 void generateMines(vector<vector<Cell>>& grid, int x, int y) {
     int currentMineCount = 0;
     while (currentMineCount < MINECOUNT) {
-        int row = rand() % MAX;
-        int column = rand() % MAX;
+        int row = GetRandomValue(0, MAX - 1);
+        int column = GetRandomValue(0, MAX - 1);
 
         // skip the safe cell and its neighbors
         if (abs(row - x) <= 1 && abs(column - y) <= 1) {
