@@ -1,8 +1,7 @@
 #include "raylib.h"
 #include <vector>
-#include <cstdlib>
-#include <iostream>
 #include <queue>
+#include <algorithm>
 using namespace std;
 
 #define WIDTH 670
@@ -39,7 +38,9 @@ void drawCells(vector<vector<Cell>>& grid) {
             DrawRectangle(drawX, drawY, LENGTH, LENGTH, GRAY);
             DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, BLACK);
 
-            DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
+            if (refToCell.activated) {
+                DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
+            }
         }
     }
 }
@@ -93,8 +94,8 @@ void generateNumbers(vector<vector<Cell>>& grid) {
 }
 
 void bfs(vector<vector<Cell>>& grid, int x, int y) {
-    int rowDir[4] = {1, -1, 0, 0};
-    int colDir[4] = {0, 0, -1, 1};
+    int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+    int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
 
     queue<pair<int, int>> q;
     q.push({x, y});
@@ -106,15 +107,16 @@ void bfs(vector<vector<Cell>>& grid, int x, int y) {
         // unlock this cell
         grid[r][c].activated = true;
 
-        for (int d = 0; d < 4; d++) {
+        for (int d = 0; d < 8; d++) {
             int newR = r + rowDir[d];
             int newC = c + colDir[d];
             
-            if (newR < 0 || newC < 0 || newR >= MAX || newC >= MAX) {
+            if (newR < 0 || newC < 0 || newR >= MAX || newC >= MAX || grid[newR][newC].activated) {
                 continue;
             }
-            if (!grid[newR][newC].activated && grid[newR][newC].status == 0) {
-                grid[newR][newC].activated = true;
+
+            grid[newR][newC].activated = true;
+            if (grid[newR][newC].status == 0) {
                 q.push({newR, newC});
             }
         }
@@ -141,19 +143,18 @@ int main() {
                 int y = (mouse.y - 155) / LENGTH;
 
                 if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
+                    grid[y][x].activated = true;
                     if (firstClick) {
-                        generateMines(grid, x, y);
+                        generateMines(grid, y, x);
                         generateNumbers(grid);
                         firstClick = false;
                     } else {
                         // normal gameplay
                     }
                     
-                    if (grid[x][y].status == 0) {
-                        bfs(grid, x, y);
+                    if (grid[y][x].status == 0) {
+                        bfs(grid, y, x);
                     }
-
-                    grid[x][y].activated = true;
                 }
             } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
                 Vector2 mouse = GetMousePosition();
@@ -161,7 +162,7 @@ int main() {
                 int y = (mouse.y - 155) / LENGTH;
 
                 if (x >= 0 || y >= 0 || x < MAX || y < MAX) {
-                    grid[x][y].isFlagged = !grid[x][y].isFlagged;
+                    grid[y][x].isFlagged = !grid[y][x].isFlagged;
                 }
             }
 
