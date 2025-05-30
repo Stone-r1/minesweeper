@@ -78,12 +78,14 @@ void generateNumbers(vector<vector<Cell>>& grid) {
                     continue;
                 }
 
-                if (grid[newR][newC] == 9) {
+                if (grid[newR][newC].status == 9) {
                     mines++;
                 }
             }
-
-            grid[row][column].status = mines;
+            
+            if (grid[row][column].status != 9) {
+                grid[row][column].status = mines;
+            }
         }
     }
 }
@@ -105,8 +107,12 @@ void bfs(vector<vector<Cell>>& grid, int x, int y) {
         for (int d = 0; d < 4; d++) {
             int newR = r + rowDir[d];
             int newC = c + colDir[d];
-
-            if (grid[newR][newC].status == 0) {
+            
+            if (newR < 0 || newC < 0 || newR >= MAX || newC >= MAX) {
+                continue;
+            }
+            if (!grid[newR][newC].activated && grid[newR][newC].status == 0) {
+                grid[newR][newC].activated = true;
                 q.push({newR, newC});
             }
         }
@@ -152,7 +158,9 @@ int main() {
                 int x = (mouse.x - 15) / LENGTH;
                 int y = (mouse.y - 155) / LENGTH;
 
-                grid[x][y].flagged = !grid[x][y].flagged;
+                if (x >= 0 || y >= 0 || x < MAX || y < MAX) {
+                    grid[x][y].isFlagged = !grid[x][y].isFlagged;
+                }
             }
 
         EndDrawing();
