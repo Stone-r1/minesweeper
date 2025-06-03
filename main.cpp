@@ -45,6 +45,9 @@ void drawCells(vector<vector<Cell>>& grid) {
             DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, BLACK);
 
             if (refToCell.activated) {
+                if (refToCell.status == 0) {
+                    continue;
+                }
                 DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
             } else if (refToCell.isFlagged) {
                 DrawText(TextFormat("%s", "#"), refToCell.x + 30, refToCell.y + 160, 25, RED);
@@ -112,7 +115,6 @@ void bfs(vector<vector<Cell>>& grid, int x, int y) {
         auto [r, c] = q.front();
         q.pop();
 
-        // unlock this cell
         grid[r][c].activated = true;
 
         for (int d = 0; d < 8; d++) {
@@ -178,7 +180,7 @@ int main() {
                 int x = (mouse.x - 15) / LENGTH;
                 int y = (mouse.y - 155) / LENGTH;
                 
-                if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
+                if (x >= 0 && y >= 0 && x < MAX && y < MAX && !grid[y][x].isFlagged) {
                     grid[y][x].activated = true;
                     if (firstClick) {
                         generateMines(grid, y, x);
