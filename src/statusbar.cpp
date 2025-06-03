@@ -1,6 +1,10 @@
 #include "statusbar.h"
 #include <cstdio>
 
+const char* ongoing = "0_0";
+const char* win = "^_^";
+const char* lost = "X_X";
+
 StatusBar::StatusBar(int width_, int height_, int flagCount_) {
     width = width_;
     height = height_;
@@ -55,6 +59,11 @@ void StatusBar::draw() {
     DrawRectangle(leftBoxX, sideBoxY, sideBoxWidth, restartButtonSize, STATUSBAR_BOX); // Flags box
     DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, STATUSBAR_BOX); // Time box
     DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, STATUSBAR_BOX); // Button box
+
+    const int expressionFontSize = fontSize - 25;
+    int expressionX = restartButtonX + (restartButtonSize - MeasureText(ongoing, expressionFontSize)) / 2;
+    int expressionY = restartButtonY + margin + (restartButtonSize - expressionFontSize) / 2;
+    DrawText(ongoing, expressionX, expressionY, expressionFontSize, GREEN);
 
     int minutes = (int)(elapsedTime / 60);
     int seconds = (int)(elapsedTime) % 60;
