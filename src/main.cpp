@@ -13,7 +13,7 @@ using namespace std;
 #define HEIGHT 800
 #define LENGTH 40
 #define MAX 16
-#define MINECOUNT 40
+#define MINECOUNT 50
 
 const int statusBarHeight = HEIGHT - 680;
 
@@ -30,18 +30,28 @@ int main() {
 
         statusBar.update();
         board.draw();
+
+        if (board.isGameWon()) {
+            statusBar.setExpression(win);
+            statusBar.stop();
+        } else if (board.isGameOver()) {
+            statusBar.setExpression(lost);
+        }
         statusBar.draw();
+
 
         Vector2 mouse = GetMousePosition();
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             if (statusBar.isRestartClicked(mouse.x, mouse.y)) {
                 board.restart();
                 statusBar.reset(MINECOUNT);
+                statusBar.setExpression(ongoing);
             } else {
                 bool mineExploded = board.handleLeftClick(mouse.x, mouse.y);
-                if (mineExploded) {
+                if (mineExploded && board.isGameOver()) {
+                    statusBar.setExpression(lost);
                     statusBar.reset(MINECOUNT);
-                } else if (!statusBar.isTimerRunning()) {
+                } else if (!statusBar.isTimerRunning() && !board.isGameOver() && !board.isGameWon()) {
                     statusBar.start();
                 }
             }

@@ -12,7 +12,7 @@ using namespace std;
 #define HEIGHT 800
 #define LENGTH 40
 #define MAX 16
-#define MINECOUNT 40
+#define MINECOUNT 50
 
 extern volatile int currentFlagAmount;
 
@@ -20,6 +20,8 @@ class Board {
 private:
     vector<vector<Cell>> grid;
     bool firstClick;
+    bool gameOver;
+    bool gameWin;
 
 public:
     Board();
@@ -29,6 +31,8 @@ public:
     void generateMines(int x, int y);
     void generateNumbers();
     bool bfs(int x, int y);
+    bool isGameWon();
+    bool isGameOver();
     bool handleLeftClick(int mouseX, int mouseY);
     void handleRightClick(int mouseX, int mouseY);
 };

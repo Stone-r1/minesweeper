@@ -2,6 +2,7 @@
 #include "board.h"
 #include <algorithm>
 #include <cstdio>
+#include <iostream>
 
 volatile int currentFlagAmount = MINECOUNT;
 const int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
@@ -11,6 +12,8 @@ const int MINE = 9, EMPTY = 0;
 Board::Board() {
     grid.assign(MAX, vector<Cell>(MAX));
     firstClick = true;
+    gameOver = false;
+    gameWin = false;
 }
 
 void Board::draw() {
@@ -42,6 +45,18 @@ void Board::draw() {
             }
         }
     }
+
+    if (gameOver) {
+        for (int i = 0; i < MAX; i++) {
+            for (int j = 0; j < MAX; j++) {
+                if (grid[i][j].isMine() && !grid[i][j].isFlagged) {
+                    grid[i][j].activated = false;
+                    DrawText(TextFormat("%s", "*"), grid[i][j].x + (LENGTH - 10 + MeasureText("*", 35)) / 2, grid[i][j].y + 152, 35, RED);
+                }
+            }
+        }
+        return;
+    }
 }
 
 void Board::restart() {
@@ -53,6 +68,8 @@ void Board::restart() {
 
     currentFlagAmount = MINECOUNT;
     firstClick = true;
+    gameOver = false;
+    gameWin = false;
 }
 
 void Board::generateMines(int x, int y) {
@@ -123,7 +140,7 @@ bool Board::bfs(int x, int y) {
                 q.push({newR, newC});
             } else if (grid[newR][newC].isMine()) {
                 if (!grid[newR][newC].isFlagged) {
-                    restart(); 
+                    gameOver = true;
                     return false;
                 } else {
                     grid[newR][newC].deactivate();
@@ -134,7 +151,25 @@ bool Board::bfs(int x, int y) {
     return true;
 }
 
+bool Board::isGameWon() {
+    for (int i = 0; i < MAX; i++) {
+        for (int j = 0; j < MAX; j++) {
+            if (!grid[i][j].isMine() && !grid[i][j].activated) {
+                return false;
+            }
+        } 
+    }
+
+    return true;
+}
+
+bool Board::isGameOver() {
+    return gameOver;
+}
+
 bool Board::handleLeftClick(int mouseX, int mouseY) {
+    if (gameOver || gameWin) return false;
+
     int x = (mouseX - 15) / LENGTH;
     int y = (mouseY - 145) / LENGTH;
 
@@ -152,11 +187,11 @@ bool Board::handleLeftClick(int mouseX, int mouseY) {
     if (grid[y][x].isEmpty()) {
         bool explode = bfs(y, x);
         if (!explode) {
-            restart();
+            // restart();
             return true;
         }
     } else if (grid[y][x].isMine()) {
-        restart();
+        gameOver = true;
         return true;
     } else {
         int minesNum = grid[y][x].status;
@@ -175,10 +210,17 @@ bool Board::handleLeftClick(int mouseX, int mouseY) {
         }
     }
 
+    if (!isGameOver() && isGameWon()) {
+        gameWin = true;
+        return true;
+    }
+
     return false;
 }
 
 void Board::handleRightClick(int mouseX, int mouseY) {
+    if (gameOver || gameWin) return;
+
     int x = (mouseX - 15) / LENGTH;
     int y = (mouseY - 145) / LENGTH;
 

@@ -1,9 +1,6 @@
 #include "statusbar.h"
 #include <cstdio>
 
-const char* ongoing = "0_0";
-const char* win = "^_^";
-const char* lost = "X_X";
 
 StatusBar::StatusBar(int width_, int height_, int flagCount_) {
     width = width_;
@@ -12,11 +9,16 @@ StatusBar::StatusBar(int width_, int height_, int flagCount_) {
     startTime = 0.0;
     elapsedTime = 0.0;
     isRunning = false;
+    currentExpression = ongoing;
 }
 
 void StatusBar::start() {
     startTime = GetTime();
     isRunning = true;
+}
+
+void StatusBar::stop() {
+    isRunning = false;
 }
 
 void StatusBar::reset(int flags) {
@@ -29,6 +31,10 @@ void StatusBar::update() {
     if (isRunning) {
         elapsedTime = GetTime() - startTime;
     }
+}
+
+void StatusBar::setExpression(const char* expr) {
+    currentExpression = expr;
 }
 
 bool StatusBar::isRestartClicked(int mouseX, int mouseY) const {
@@ -61,9 +67,9 @@ void StatusBar::draw() {
     DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, STATUSBAR_BOX); // Button box
 
     const int expressionFontSize = fontSize - 25;
-    int expressionX = restartButtonX + (restartButtonSize - MeasureText(ongoing, expressionFontSize)) / 2;
+    int expressionX = restartButtonX + (restartButtonSize - MeasureText(currentExpression, expressionFontSize)) / 2;
     int expressionY = restartButtonY + margin + (restartButtonSize - expressionFontSize) / 2;
-    DrawText(ongoing, expressionX, expressionY, expressionFontSize, GREEN);
+    DrawText(currentExpression, expressionX, expressionY, expressionFontSize, GREEN);
 
     int minutes = (int)(elapsedTime / 60);
     int seconds = (int)(elapsedTime) % 60;
