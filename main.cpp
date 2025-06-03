@@ -85,8 +85,6 @@ void drawStatusBar() {
     DrawText(buffer, flagTextX, flagTextY, fontSize, GREEN);
 }
 
-
-// 640 x 640 with 15px margins
 void drawCells(vector<vector<Cell>>& grid) {
     for (int row = 0; row < MAX; row++) {
         for (int column = 0; column < MAX; column++) {
@@ -165,6 +163,8 @@ void restartTheGame(vector<vector<Cell>>& grid) {
             grid[i][j].reset();
         }
     }
+
+    currentFlagAmount = MINECOUNT;
 }
 
 void manageStatusBarActivities(int r, int c, vector<vector<Cell>>& grid, bool& firstClick) {
@@ -280,6 +280,11 @@ int main() {
 
                 if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
                     grid[y][x].toggleFlag();
+                    if (grid[y][x].isFlagged) {
+                        currentFlagAmount--;
+                    } else {
+                        currentFlagAmount++;
+                    }
                 }
             }
 
