@@ -10,6 +10,7 @@ set(SOURCES
     src/main.cpp
     src/cell.cpp
     src/board.cpp
+    src/statusbar.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
