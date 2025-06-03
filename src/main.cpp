@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "cell.h"
 #include <vector>
 #include <queue>
 #include <iostream>
@@ -20,41 +21,6 @@ volatile static int currentFlagAmount = MINECOUNT;
 double startTime = 0;
 double elapsedTime = 0;
 bool isStopwatchRunning = false;
-
-class Cell {
-public:
-    int x;
-    int y;
-    int status;
-    bool activated;
-    bool isFlagged;
-
-    bool isMine() const {
-        return status == MINE;
-    }
-
-    bool isEmpty() const {
-        return status == EMPTY;
-    }
-
-    void activate() {
-        activated = true;
-    }
-
-    void deactivate() {
-        activated = false;
-    }
-
-    void toggleFlag() {
-        isFlagged = !isFlagged;
-    }
-
-    void reset() {
-        status = EMPTY;
-        activated = false;
-        isFlagged = false;
-    }
-};
 
 class Board {
 private:
@@ -83,12 +49,12 @@ public:
 
                 if (refToCell.activated) {
                     if (refToCell.isEmpty()) {
-                        DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, LIGHTGRAY); // TEMPORARY
+                        DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, LIGHTGRAY);
                         continue;
                     }
-                    DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
+                    DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 153, 25, GREEN);
                 } else if (refToCell.isFlagged) {
-                    DrawText(TextFormat("%s", "#"), refToCell.x + 30, refToCell.y + 160, 25, RED);
+                    DrawText(TextFormat("%s", "#"), refToCell.x + 30, refToCell.y + 153, 25, RED);
                 }
             }
         }
