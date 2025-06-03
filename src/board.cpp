@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "board.h"
 #include <algorithm>
+#include <cstdio>
 
 volatile int currentFlagAmount = MINECOUNT;
 const int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
@@ -21,6 +22,7 @@ void Board::draw() {
 
             int drawX = refToCell.x + 15;
             int drawY = refToCell.y + 145;
+            const int fontSize = 35;
 
             DrawRectangle(drawX + 4, drawY + 4, LENGTH - 2, LENGTH - 2, CELL_SH);
             DrawRectangle(drawX, drawY, LENGTH - 2, LENGTH - 2, CELL_HL);
@@ -31,9 +33,12 @@ void Board::draw() {
                 if (refToCell.isEmpty()) {
                     continue;
                 }
-                DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 153, 25, DARKGREEN);
+
+                char buffer[1];
+                snprintf(buffer, sizeof(buffer), "%d", refToCell.status); 
+                DrawText(TextFormat("%d", refToCell.status), refToCell.x + (LENGTH + 6 + MeasureText(buffer, fontSize)) / 2, refToCell.y + 152, fontSize, DARKGREEN);
             } else if (refToCell.isFlagged) {
-                DrawText(TextFormat("%s", "#"), refToCell.x + 30, refToCell.y + 153, 25, RED);
+                DrawText(TextFormat("%s", "⚑"), refToCell.x + (LENGTH - 10 + MeasureText("⚑", fontSize)) / 2, refToCell.y + 152, fontSize, RED);
             }
         }
     }
@@ -95,7 +100,7 @@ void Board::generateNumbers() {
     }
 }
 
-void Board::bfs(int x, int y) {
+bool Board::bfs(int x, int y) {
     queue<pair<int, int>> q;
     q.push({x, y});
     
@@ -119,13 +124,14 @@ void Board::bfs(int x, int y) {
             } else if (grid[newR][newC].isMine()) {
                 if (!grid[newR][newC].isFlagged) {
                     restart(); 
-                    return;
+                    return false;
                 } else {
                     grid[newR][newC].deactivate();
                 }
             }
         }
     }
+    return true;
 }
 
 bool Board::handleLeftClick(int mouseX, int mouseY) {
@@ -144,7 +150,11 @@ bool Board::handleLeftClick(int mouseX, int mouseY) {
     }
 
     if (grid[y][x].isEmpty()) {
-        bfs(y, x);
+        bool explode = bfs(y, x);
+        if (!explode) {
+            restart();
+            return true;
+        }
     } else if (grid[y][x].isMine()) {
         restart();
         return true;
@@ -158,7 +168,10 @@ bool Board::handleLeftClick(int mouseX, int mouseY) {
             if (grid[newR][newC].isFlagged) flagsFound++;
         }
         if (flagsFound >= minesNum) {
-            bfs(y, x);
+            int explode = bfs(y, x);
+            if (!explode) {
+                return true;
+            }
         }
     }
 

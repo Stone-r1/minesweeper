@@ -28,7 +28,7 @@ public:
     void restart();
     void generateMines(int x, int y);
     void generateNumbers();
-    void bfs(int x, int y);
+    bool bfs(int x, int y);
     bool handleLeftClick(int mouseX, int mouseY);
     void handleRightClick(int mouseX, int mouseY);
 };
