@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include <vector>
 #include <queue>
+#include <iostream>
 #include <algorithm>
 using namespace std;
 
@@ -9,6 +10,8 @@ using namespace std;
 #define LENGTH 40
 #define MAX 16
 #define MINECOUNT 40
+
+const int statusBarHeight = HEIGHT - 660;
 
 struct Cell {
     int x;
@@ -20,7 +23,10 @@ struct Cell {
 
 // shows amount of flags, start game button, time.
 void drawStatusBar() {
-    DrawRectangle(0, 0, WIDTH, HEIGHT - 660, RED);    
+    DrawRectangle(0, 0, WIDTH, statusBarHeight, RED); 
+
+    // CHANGE ALIGNMENT LATER
+    DrawRectangle(10, 10, statusBarHeight - 20, statusBarHeight - 20, RAYWHITE);
 }
 
 // 640 x 640 with 15px margins
@@ -125,6 +131,26 @@ void bfs(vector<vector<Cell>>& grid, int x, int y) {
     }
 }
 
+void restartTheGame(vector<vector<Cell>>& grid) {
+    for (int i = 0; i < MAX; i++) {
+        for (int j = 0; j < MAX; j++) {
+            grid[i][j].status = 0;
+            grid[i][j].activated = false;
+            grid[i][j].isFlagged = false;
+        }
+    }
+}
+
+void manageStatusBarActivities(int r, int c, vector<vector<Cell>>& grid, bool& firstClick) {
+    int x1 = 10, x2 = statusBarHeight - 20;
+    int y1 = x1, y2 = x2;
+
+    if (r < x2 && r > x1 && c < y2 && c > y1) {
+        restartTheGame(grid);
+        firstClick = true;
+    }
+}
+
 int main() {
     InitWindow(WIDTH, HEIGHT, "testing");
     SetTargetFPS(60);
@@ -141,9 +167,17 @@ int main() {
 
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 Vector2 mouse = GetMousePosition();
+
+                int statusBarX = mouse.x;
+                int statusBarY = mouse.y;
+
+                if (statusBarX >= 0 && statusBarX < statusBarHeight && statusBarY >= 0 && statusBarY < WIDTH) {
+                    manageStatusBarActivities(statusBarY, statusBarX, grid, firstClick);
+                }
+
                 int x = (mouse.x - 15) / LENGTH;
                 int y = (mouse.y - 155) / LENGTH;
-
+                
                 if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
                     grid[y][x].activated = true;
                     if (firstClick) {
@@ -151,7 +185,7 @@ int main() {
                         generateNumbers(grid);
                         firstClick = false;
                     } else {
-                        // normal gameplay
+                        cout << "clicked!\n";
                     }
                     
                     if (grid[y][x].status == 0) {
