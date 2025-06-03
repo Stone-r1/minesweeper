@@ -11,16 +11,18 @@ using namespace std;
 #define MAX 16
 #define MINECOUNT 40
 
-const int statusBarHeight = HEIGHT - 660;
+const int statusBarHeight = HEIGHT - 680;
 const int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
 const int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 const int MINE = 9, EMPTY = 0;
+
+volatile static int currentFlagAmount = MINECOUNT;
 
 class Cell {
 public:
     int x;
     int y;
-    int status; // bomb will be 9, empty cell 0.
+    int status;
     bool activated;
     bool isFlagged;
 
@@ -51,13 +53,38 @@ public:
     }
 };
 
-// shows amount of flags, start game button, time.
 void drawStatusBar() {
-    DrawRectangle(0, 0, WIDTH, statusBarHeight, RED); 
+    DrawRectangle(0, 0, WIDTH, statusBarHeight, RED);
 
-    // CHANGE ALIGNMENT LATER
-    DrawRectangle(10, 10, statusBarHeight - 20, statusBarHeight - 20, RAYWHITE);
+    const int margin = 10;
+    const int restartButtonSize = statusBarHeight - 20;
+    const int sideBoxWidth = statusBarHeight * 2;
+
+    int restartButtonX = (WIDTH - restartButtonSize) / 2;
+    int restartButtonY = margin;
+
+    // position side boxes with margins
+    int leftBoxX = margin;
+    int rightBoxX = WIDTH - sideBoxWidth - margin;
+    int sideBoxY = margin;
+
+    DrawRectangle(leftBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Flags box
+    DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Time box
+    DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, RAYWHITE); // Button box
+
+    const char* currentTime = "00:00";
+    const int fontSize = 80;
+    int timeTextX = rightBoxX + (sideBoxWidth - MeasureText(currentTime, fontSize)) / 2;
+    int timeTextY = margin + sideBoxY + (restartButtonSize - fontSize) / 2;
+    DrawText(currentTime, timeTextX, timeTextY, fontSize, GREEN);
+
+    char buffer[3];
+    snprintf(buffer, sizeof(buffer), "%d", currentFlagAmount);
+    int flagTextX = leftBoxX + (sideBoxWidth - MeasureText(buffer, fontSize)) / 2;
+    int flagTextY = timeTextY;
+    DrawText(buffer, flagTextX, flagTextY, fontSize, GREEN);
 }
+
 
 // 640 x 640 with 15px margins
 void drawCells(vector<vector<Cell>>& grid) {
@@ -68,7 +95,7 @@ void drawCells(vector<vector<Cell>>& grid) {
             refToCell.y = row * LENGTH;
 
             int drawX = refToCell.x + 15;
-            int drawY = refToCell.y + 155;
+            int drawY = refToCell.y + 145;
 
             // 15 px margin on the right and the left
             DrawRectangle(drawX, drawY, LENGTH, LENGTH, GRAY);
