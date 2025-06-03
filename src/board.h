@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include "cell.h"
+#include "colors.h"
 #include <vector>
 #include <queue>
 using namespace std;

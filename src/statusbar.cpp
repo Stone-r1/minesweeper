@@ -37,7 +37,7 @@ bool StatusBar::isRestartClicked(int mouseX, int mouseY) const {
 }
 
 void StatusBar::draw() {
-    DrawRectangle(0, 0, width, height, RED);
+    DrawRectangle(0, 0, width, height, STATUSBAR_BACKGROUND);
 
     const int margin = 10;
     const int restartButtonSize = height - 20;
@@ -52,9 +52,9 @@ void StatusBar::draw() {
     int rightBoxX = width - sideBoxWidth - margin;
     int sideBoxY = margin;
 
-    DrawRectangle(leftBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Flags box
-    DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Time box
-    DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, RAYWHITE); // Button box
+    DrawRectangle(leftBoxX, sideBoxY, sideBoxWidth, restartButtonSize, STATUSBAR_BOX); // Flags box
+    DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, STATUSBAR_BOX); // Time box
+    DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, STATUSBAR_BOX); // Button box
 
     int minutes = (int)(elapsedTime / 60);
     int seconds = (int)(elapsedTime) % 60;

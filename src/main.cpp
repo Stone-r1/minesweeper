@@ -31,7 +31,7 @@ int main() {
         statusBar.update();
         board.draw();
         statusBar.draw();
-    
+
         Vector2 mouse = GetMousePosition();
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             if (statusBar.isRestartClicked(mouse.x, mouse.y)) {

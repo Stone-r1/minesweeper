@@ -22,16 +22,16 @@ void Board::draw() {
             int drawX = refToCell.x + 15;
             int drawY = refToCell.y + 145;
 
-            // 15 px margin on the right and the left
-            DrawRectangle(drawX, drawY, LENGTH, LENGTH, GRAY);
-            DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, BLACK);
+            DrawRectangle(drawX + 4, drawY + 4, LENGTH - 2, LENGTH - 2, CELL_SH);
+            DrawRectangle(drawX, drawY, LENGTH - 2, LENGTH - 2, CELL_HL);
+            DrawRectangle(drawX + 4, drawY + 4, LENGTH - 6, LENGTH - 6, CELL);
 
-            if (refToCell.activated) {
+            if (refToCell.activated) { 
+                DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, LIGHTGRAY);
                 if (refToCell.isEmpty()) {
-                    DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, LIGHTGRAY);
                     continue;
                 }
-                DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 153, 25, GREEN);
+                DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 153, 25, DARKGREEN);
             } else if (refToCell.isFlagged) {
                 DrawText(TextFormat("%s", "#"), refToCell.x + 30, refToCell.y + 153, 25, RED);
             }

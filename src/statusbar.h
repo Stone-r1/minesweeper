@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include "cell.h"
+#include "colors.h"
 
 #define WIDTH 670
 #define HEIGHT 800
