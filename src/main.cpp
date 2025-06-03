@@ -18,9 +18,6 @@ const int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 const int MINE = 9, EMPTY = 0;
 
 volatile static int currentFlagAmount = MINECOUNT;
-double startTime = 0;
-double elapsedTime = 0;
-bool isStopwatchRunning = false;
 
 class Board {
 private:
@@ -68,8 +65,6 @@ public:
         }
 
         currentFlagAmount = MINECOUNT;
-        elapsedTime = 0;
-        isStopwatchRunning = false;
         firstClick = true;
     }
 
@@ -151,37 +146,26 @@ public:
         }
     }
 
-    void handleLeftClick(int mouseX, int mouseY) {
-        int statusBarX = mouseX;
-        int statusBarY = mouseY;
-
-        if (statusBarX >= 0 && statusBarX < statusBarHeight && statusBarY >= 0 && statusBarY < WIDTH) {
-            int x1 = 10, x2 = statusBarHeight - 20;
-            int y1 = x1, y2 = x2;
-            if (statusBarY < x2 && statusBarY > x1 && statusBarX < y2 && statusBarX > y1) {
-                restart();
-                return;
-            }
-        }
-
+    bool handleLeftClick(int mouseX, int mouseY) {
         int x = (mouseX - 15) / LENGTH;
-        int y = (mouseY - 155) / LENGTH;
+        int y = (mouseY - 145) / LENGTH;
 
-        if (x < 0 || y < 0 || x >= MAX || y >= MAX || grid[y][x].isFlagged) return;
+        if (x < 0 || y < 0 || x >= MAX || y >= MAX || grid[y][x].isFlagged) {
+            return false;
+        }
 
         grid[y][x].activate();
         if (firstClick) {
             generateMines(y, x);
             generateNumbers();
             firstClick = false;
-            startTime = GetTime();
-            isStopwatchRunning = true;
         }
 
         if (grid[y][x].isEmpty()) {
             bfs(y, x);
         } else if (grid[y][x].isMine()) {
             restart();
+            return true;
         } else {
             int minesNum = grid[y][x].status;
             int flagsFound = 0;
@@ -195,75 +179,151 @@ public:
                 bfs(y, x);
             }
         }
+
+        return false;
     }
 
     void handleRightClick(int mouseX, int mouseY) {
         int x = (mouseX - 15) / LENGTH;
         int y = (mouseY - 155) / LENGTH;
 
-        if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
+        if (x >= 0 && y >= 0 && x < MAX && y < MAX && !grid[y][x].activated) {
             grid[y][x].toggleFlag();
             currentFlagAmount += grid[y][x].isFlagged ? -1 : 1;
         }
     }
 };
 
-void drawStatusBar() {
-    DrawRectangle(0, 0, WIDTH, statusBarHeight, RED);
+class StatusBar {
+private:
+    int width;
+    int height;
+    int flagCount;
+    double startTime;
+    double elapsedTime;
+    bool isRunning;
 
-    const int margin = 10;
-    const int restartButtonSize = statusBarHeight - 20;
-    const int sideBoxWidth = statusBarHeight * 2;
-    const int fontSize = 80;
+public:
+    StatusBar(int width_, int height_, int flagCount_) {
+        width = width_;
+        height = height_;
+        flagCount = flagCount_;
+        startTime = 0.0;
+        elapsedTime = 0.0;
+        isRunning = false;
+    }
 
-    int restartButtonX = (WIDTH - restartButtonSize) / 2;
-    int restartButtonY = margin;
+    void start() {
+        startTime = GetTime();
+        isRunning = true;
+    }
 
-    // position side boxes with margins
-    int leftBoxX = margin;
-    int rightBoxX = WIDTH - sideBoxWidth - margin;
-    int sideBoxY = margin;
+    void reset(int flags) {
+        flagCount = flags;
+        elapsedTime = 0.0;
+        isRunning = false;
+    }
 
-    DrawRectangle(leftBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Flags box
-    DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Time box
-    DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, RAYWHITE); // Button box
+    void update() {
+        if (isRunning) {
+            elapsedTime = GetTime() - startTime;
+        }
+    }
 
-    int minutes = (int)(elapsedTime / 60);
-    int seconds = (int)(elapsedTime) % 60;
-    char currentTime[6];
-    snprintf(currentTime, sizeof(currentTime), "%02d:%02d", minutes, seconds);
-    int timeTextX = rightBoxX + (sideBoxWidth - MeasureText(currentTime, fontSize)) / 2;
-    int timeTextY = margin + sideBoxY + (restartButtonSize - fontSize) / 2;
-    DrawText(currentTime, timeTextX, timeTextY, fontSize, GREEN);
+    bool isRestartClicked(int mouseX, int mouseY) const {
+        int margin = 10;
+        int size = height - 20;
+        int x1 = (width - size) / 2, x2 = x1 + size;
+        int y1 = margin, y2 = y1 + size;
 
-    char buffer[3];
-    snprintf(buffer, sizeof(buffer), "%d", currentFlagAmount);
-    int flagTextX = leftBoxX + (sideBoxWidth - MeasureText(buffer, fontSize)) / 2;
-    int flagTextY = timeTextY;
-    DrawText(buffer, flagTextX, flagTextY, fontSize, GREEN);
-}
+        return (mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2);
+    }
+
+    void draw() {
+        DrawRectangle(0, 0, width, height, RED);
+
+        const int margin = 10;
+        const int restartButtonSize = height - 20;
+        const int sideBoxWidth = height * 2;
+        const int fontSize = 80;
+
+        int restartButtonX = (WIDTH - restartButtonSize) / 2;
+        int restartButtonY = margin;
+
+        // position side boxes with margins
+        int leftBoxX = margin;
+        int rightBoxX = width - sideBoxWidth - margin;
+        int sideBoxY = margin;
+
+        DrawRectangle(leftBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Flags box
+        DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Time box
+        DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, RAYWHITE); // Button box
+
+        int minutes = (int)(elapsedTime / 60);
+        int seconds = (int)(elapsedTime) % 60;
+        char currentTime[6];
+        snprintf(currentTime, sizeof(currentTime), "%02d:%02d", minutes, seconds);
+        int timeTextX = rightBoxX + (sideBoxWidth - MeasureText(currentTime, fontSize)) / 2;
+        int timeTextY = margin + sideBoxY + (restartButtonSize - fontSize) / 2;
+        DrawText(currentTime, timeTextX, timeTextY, fontSize, GREEN);
+
+        char buffer[3];
+        snprintf(buffer, sizeof(buffer), "%d", currentFlagAmount);
+        int flagTextX = leftBoxX + (sideBoxWidth - MeasureText(buffer, fontSize)) / 2;
+        int flagTextY = timeTextY;
+        DrawText(buffer, flagTextX, flagTextY, fontSize, GREEN);
+    }
+
+    void incrementFlag() {
+        flagCount++; 
+    }
+
+    void decrementFlag() {
+        flagCount--;
+    }
+
+    int getFlagAmount() {
+        return flagCount;
+    }
+
+    bool isTimerRunning() {
+        return isRunning;
+    }
+
+    double getElapsedTime() {
+        return elapsedTime;
+    }
+};
 
 int main() {
     InitWindow(WIDTH, HEIGHT, "testing");
     SetTargetFPS(60);
 
     Board board;
+    StatusBar statusBar(WIDTH, statusBarHeight, MINECOUNT);
+
     while(!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-        if (isStopwatchRunning) {
-            elapsedTime = GetTime() - startTime;
-        }
-
-        drawStatusBar();
+        statusBar.update();
         board.draw();
-
+        statusBar.draw();
+    
+        Vector2 mouse = GetMousePosition();
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            Vector2 mouse = GetMousePosition();
-            board.handleLeftClick(mouse.x, mouse.y);
+            if (statusBar.isRestartClicked(mouse.x, mouse.y)) {
+                board.restart();
+                statusBar.reset(MINECOUNT);
+            } else {
+                bool mineExploded = board.handleLeftClick(mouse.x, mouse.y);
+                if (mineExploded) {
+                    statusBar.reset(MINECOUNT);
+                } else if (!statusBar.isTimerRunning()) {
+                    statusBar.start();
+                }
+            }
         } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-            Vector2 mouse = GetMousePosition();
             board.handleRightClick(mouse.x, mouse.y);
         }
 
