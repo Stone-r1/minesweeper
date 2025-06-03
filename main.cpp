@@ -12,6 +12,8 @@ using namespace std;
 #define MINECOUNT 40
 
 const int statusBarHeight = HEIGHT - 660;
+const int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
+const int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
 struct Cell {
     int x;
@@ -46,6 +48,7 @@ void drawCells(vector<vector<Cell>>& grid) {
 
             if (refToCell.activated) {
                 if (refToCell.status == 0) {
+                    DrawRectangle(drawX + 2, drawY + 2, LENGTH - 4, LENGTH - 4, LIGHTGRAY); // TEMPORARY
                     continue;
                 }
                 DrawText(TextFormat("%d", refToCell.status), refToCell.x + 30, refToCell.y + 160, 25, GREEN);
@@ -77,9 +80,6 @@ void generateMines(vector<vector<Cell>>& grid, int x, int y) {
 }
 
 void generateNumbers(vector<vector<Cell>>& grid) {
-    int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
-    int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
-
     for (int row = 0; row < MAX; row++) {
         for (int column = 0; column < MAX; column++) {
             int mines = 0;
@@ -104,10 +104,27 @@ void generateNumbers(vector<vector<Cell>>& grid) {
     }
 }
 
-void bfs(vector<vector<Cell>>& grid, int x, int y) {
-    int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
-    int rowDir[8] = {0, 1, 1, 1, 0, -1, -1, -1};
+void restartTheGame(vector<vector<Cell>>& grid) {
+    for (int i = 0; i < MAX; i++) {
+        for (int j = 0; j < MAX; j++) {
+            grid[i][j].status = 0;
+            grid[i][j].activated = false;
+            grid[i][j].isFlagged = false;
+        }
+    }
+}
 
+void manageStatusBarActivities(int r, int c, vector<vector<Cell>>& grid, bool& firstClick) {
+    int x1 = 10, x2 = statusBarHeight - 20;
+    int y1 = x1, y2 = x2;
+
+    if (r < x2 && r > x1 && c < y2 && c > y1) {
+        restartTheGame(grid);
+        firstClick = true;
+    }
+}
+
+void bfs(vector<vector<Cell>>& grid, int x, int y, bool& firstClick) {
     queue<pair<int, int>> q;
     q.push({x, y});
     
@@ -128,28 +145,16 @@ void bfs(vector<vector<Cell>>& grid, int x, int y) {
             grid[newR][newC].activated = true;
             if (grid[newR][newC].status == 0) {
                 q.push({newR, newC});
+            } else if (grid[newR][newC].status == 9) {
+                if (!grid[newR][newC].isFlagged) {
+                    restartTheGame(grid);
+                    firstClick = true;
+                    return;
+                } else {
+                    grid[newR][newC].activated = false;
+                }
             }
         }
-    }
-}
-
-void restartTheGame(vector<vector<Cell>>& grid) {
-    for (int i = 0; i < MAX; i++) {
-        for (int j = 0; j < MAX; j++) {
-            grid[i][j].status = 0;
-            grid[i][j].activated = false;
-            grid[i][j].isFlagged = false;
-        }
-    }
-}
-
-void manageStatusBarActivities(int r, int c, vector<vector<Cell>>& grid, bool& firstClick) {
-    int x1 = 10, x2 = statusBarHeight - 20;
-    int y1 = x1, y2 = x2;
-
-    if (r < x2 && r > x1 && c < y2 && c > y1) {
-        restartTheGame(grid);
-        firstClick = true;
     }
 }
 
@@ -189,13 +194,30 @@ int main() {
                     }
                     
                     if (grid[y][x].status == 0) {
-                        bfs(grid, y, x);
-                    }
-
-                    if (grid[y][x].status == 9) {
+                        bfs(grid, y, x, firstClick);
+                    } else if (grid[y][x].status == 9) {
                         // ADD GAMEOVER SCREEN LATER
                         restartTheGame(grid);
                         firstClick = true;
+                    } else {
+                        int minesNum = grid[y][x].status;
+                        int flagsFound = 0;
+
+                        for (int d = 0; d < 8; d++) {
+                            int newR = y + rowDir[d];
+                            int newC = x + colDir[d];
+
+                            if (newR < 0 || newC < 0 || newR >= MAX || newC >= MAX) {
+                                continue;
+                            } 
+                            if (grid[newR][newC].isFlagged) {
+                                flagsFound++;
+                            }
+                        }
+
+                        if (flagsFound >= minesNum) {
+                            bfs(grid, y, x, firstClick);
+                        }
                     }
                 }
             } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
