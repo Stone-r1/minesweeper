@@ -184,12 +184,16 @@ int main() {
                         generateMines(grid, y, x);
                         generateNumbers(grid);
                         firstClick = false;
-                    } else {
-                        cout << "clicked!\n";
                     }
                     
                     if (grid[y][x].status == 0) {
                         bfs(grid, y, x);
+                    }
+
+                    if (grid[y][x].status == 9) {
+                        // ADD GAMEOVER SCREEN LATER
+                        restartTheGame(grid);
+                        firstClick = true;
                     }
                 }
             } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
