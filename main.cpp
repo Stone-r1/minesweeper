@@ -17,6 +17,9 @@ const int colDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 const int MINE = 9, EMPTY = 0;
 
 volatile static int currentFlagAmount = MINECOUNT;
+double startTime = 0;
+double elapsedTime = 0;
+bool isStopwatchRunning = false;
 
 class Cell {
 public:
@@ -59,6 +62,7 @@ void drawStatusBar() {
     const int margin = 10;
     const int restartButtonSize = statusBarHeight - 20;
     const int sideBoxWidth = statusBarHeight * 2;
+    const int fontSize = 80;
 
     int restartButtonX = (WIDTH - restartButtonSize) / 2;
     int restartButtonY = margin;
@@ -72,8 +76,10 @@ void drawStatusBar() {
     DrawRectangle(rightBoxX, sideBoxY, sideBoxWidth, restartButtonSize, RAYWHITE); // Time box
     DrawRectangle(restartButtonX, restartButtonY, restartButtonSize, restartButtonSize, RAYWHITE); // Button box
 
-    const char* currentTime = "00:00";
-    const int fontSize = 80;
+    int minutes = (int)(elapsedTime / 60);
+    int seconds = (int)(elapsedTime) % 60;
+    char currentTime[6];
+    snprintf(currentTime, sizeof(currentTime), "%02d:%02d", minutes, seconds);
     int timeTextX = rightBoxX + (sideBoxWidth - MeasureText(currentTime, fontSize)) / 2;
     int timeTextY = margin + sideBoxY + (restartButtonSize - fontSize) / 2;
     DrawText(currentTime, timeTextX, timeTextY, fontSize, GREEN);
@@ -165,6 +171,8 @@ void restartTheGame(vector<vector<Cell>>& grid) {
     }
 
     currentFlagAmount = MINECOUNT;
+    elapsedTime = 0;
+    isStopwatchRunning = false;
 }
 
 void manageStatusBarActivities(int r, int c, vector<vector<Cell>>& grid, bool& firstClick) {
@@ -219,75 +227,81 @@ int main() {
     bool firstClick = true;
 
     while(!WindowShouldClose()) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Vector2 mouse = GetMousePosition();
+
+            int statusBarX = mouse.x;
+            int statusBarY = mouse.y;
+
+            if (statusBarX >= 0 && statusBarX < statusBarHeight && statusBarY >= 0 && statusBarY < WIDTH) {
+                manageStatusBarActivities(statusBarY, statusBarX, grid, firstClick);
+            }
+
+            int x = (mouse.x - 15) / LENGTH;
+            int y = (mouse.y - 155) / LENGTH;
+            
+            if (x >= 0 && y >= 0 && x < MAX && y < MAX && !grid[y][x].isFlagged) {
+                grid[y][x].activate();
+                if (firstClick) {
+                    generateMines(grid, y, x);
+                    generateNumbers(grid);
+                    firstClick = false;
+
+                    startTime = GetTime();
+                    isStopwatchRunning = true;
+                }
+                
+                if (grid[y][x].isEmpty()) {
+                    bfs(grid, y, x, firstClick);
+                } else if (grid[y][x].isMine()) {
+                    // ADD GAMEOVER SCREEN LATER
+                    restartTheGame(grid);
+                    firstClick = true;
+                } else {
+                    int minesNum = grid[y][x].status;
+                    int flagsFound = 0;
+
+                    for (int d = 0; d < 8; d++) {
+                        int newR = y + rowDir[d];
+                        int newC = x + colDir[d];
+
+                        if (newR < 0 || newC < 0 || newR >= MAX || newC >= MAX) {
+                            continue;
+                        } 
+                        if (grid[newR][newC].isFlagged) {
+                            flagsFound++;
+                        }
+                    }
+
+                    if (flagsFound >= minesNum) {
+                        bfs(grid, y, x, firstClick);
+                    }
+                }
+            }
+        } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+            Vector2 mouse = GetMousePosition();
+            int x = (mouse.x - 15) / LENGTH;
+            int y = (mouse.y - 155) / LENGTH;
+
+            if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
+                grid[y][x].toggleFlag();
+                if (grid[y][x].isFlagged) {
+                    currentFlagAmount--;
+                } else {
+                    currentFlagAmount++;
+                }
+            }
+        }
+
+        if (isStopwatchRunning) {
+            elapsedTime = GetTime() - startTime;
+        }
+
         ClearBackground(RAYWHITE);
         
         BeginDrawing();
             drawStatusBar();
             drawCells(grid);
-
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                Vector2 mouse = GetMousePosition();
-
-                int statusBarX = mouse.x;
-                int statusBarY = mouse.y;
-
-                if (statusBarX >= 0 && statusBarX < statusBarHeight && statusBarY >= 0 && statusBarY < WIDTH) {
-                    manageStatusBarActivities(statusBarY, statusBarX, grid, firstClick);
-                }
-
-                int x = (mouse.x - 15) / LENGTH;
-                int y = (mouse.y - 155) / LENGTH;
-                
-                if (x >= 0 && y >= 0 && x < MAX && y < MAX && !grid[y][x].isFlagged) {
-                    grid[y][x].activate();
-                    if (firstClick) {
-                        generateMines(grid, y, x);
-                        generateNumbers(grid);
-                        firstClick = false;
-                    }
-                    
-                    if (grid[y][x].isEmpty()) {
-                        bfs(grid, y, x, firstClick);
-                    } else if (grid[y][x].isMine()) {
-                        // ADD GAMEOVER SCREEN LATER
-                        restartTheGame(grid);
-                        firstClick = true;
-                    } else {
-                        int minesNum = grid[y][x].status;
-                        int flagsFound = 0;
-
-                        for (int d = 0; d < 8; d++) {
-                            int newR = y + rowDir[d];
-                            int newC = x + colDir[d];
-
-                            if (newR < 0 || newC < 0 || newR >= MAX || newC >= MAX) {
-                                continue;
-                            } 
-                            if (grid[newR][newC].isFlagged) {
-                                flagsFound++;
-                            }
-                        }
-
-                        if (flagsFound >= minesNum) {
-                            bfs(grid, y, x, firstClick);
-                        }
-                    }
-                }
-            } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-                Vector2 mouse = GetMousePosition();
-                int x = (mouse.x - 15) / LENGTH;
-                int y = (mouse.y - 155) / LENGTH;
-
-                if (x >= 0 && y >= 0 && x < MAX && y < MAX) {
-                    grid[y][x].toggleFlag();
-                    if (grid[y][x].isFlagged) {
-                        currentFlagAmount--;
-                    } else {
-                        currentFlagAmount++;
-                    }
-                }
-            }
-
         EndDrawing();
     }
     CloseWindow();
